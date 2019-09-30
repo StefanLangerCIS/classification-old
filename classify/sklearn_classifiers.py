@@ -60,6 +60,7 @@ class SklearnClassifier(TextClassifier):
         elif classifier_type == "RandomForestClassifier":
             self.sklearn_classifier = RandomForestClassifier(n_estimators=10)
 
+        self.classifier_type = classifier_type
         self._load_models()
         self.set_hyperparameters()
 

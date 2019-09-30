@@ -1,5 +1,5 @@
 """
-Run any of the classifier
+Evaluate any of the classifier, print a confusion matrix and create further evalution metrics
 """
 import argparse
 from datetime import datetime
@@ -19,7 +19,8 @@ import warnings
 def plot_and_store_confusion_matrix(y_true, y_pred,
                           file_name,
                           normalize=False,
-                          cmap=plt.cm.Blues):
+                          cmap=plt.cm.Blues,
+                          show = False):
     """
     This function prints and plots the confusion matrix, and saves it to a file
     :param y_true: The true classes
@@ -27,6 +28,7 @@ def plot_and_store_confusion_matrix(y_true, y_pred,
     :param file_name: The file name to store the image of the confusion matrix
     :param normalize: normalize numbers (counts to relative counts)
     :param cmap: Layout
+    :param show: Display the matrix. If false, only store it
     :return: Nothing
     """
     np.set_printoptions(precision=2)
@@ -68,11 +70,15 @@ def plot_and_store_confusion_matrix(y_true, y_pred,
                     color="white" if cm[i, j] > thresh else "black")
     fig.tight_layout()
     plt.savefig(file_name)
-    plt.show()
+    if(show):
+        plt.show()
 
 
 def main():
     parser = argparse.ArgumentParser(description='Classify based on a text classifier')
+
+    classifier_types = ["RandomForestClassifier", "KNeighborsClassifier", "MLPClassifier",
+                                    "GaussianNB", "MultinomialNB","SVC", "LogisticRegression"]
 
     parser.add_argument('--training',
                     default= r"D:\ProjectData\Uni\ltrs\data\classifier\classifier_training_data.json",
@@ -87,7 +93,7 @@ def main():
                         help='Folder where to write the classification results')
 
     parser.add_argument('--classifier',
-                    choices=['RandomForestClassifier', 'MLPClassifier', 'KNeighborsClassifier', 'GaussianNB', 'MultinomialNB', 'SVC', 'LogisticRegression'],
+                    choices=classifier_types + ["all"],
                     default="RandomForestClassifier",
                         help='The classifier to use')
 
@@ -103,77 +109,71 @@ def main():
 
     print("Starting classifier {0} on {1}".format(args.classifier, args.input))
 
-    if args.classifier == 'RandomForestClassifier':
-        classifier = SklearnClassifier("RandomForestClassifier")
-    elif args.classifier == 'KNeighborsClassifier':
-        classifier = SklearnClassifier("KNeighborsClassifier")
-    elif args.classifier == 'MLPClassifier':
-        classifier = SklearnClassifier("MLPClassifier")
-    elif args.classifier == 'GaussianNB':
-        classifier = SklearnClassifier("GaussianNB")
-    elif args.classifier == 'MultinomialNB':
-        classifier = SklearnClassifier("MultinomialNB")
-    elif args.classifier == 'SVC':
-        classifier = SklearnClassifier("SVC")
-    elif args.classifier == 'LogisticRegression':
-        classifier = SklearnClassifier("LogisticRegression")
+    # Run all classifiers
+    if args.classifier == "all":
+        classifiers = classifier_types
+    else:
+        classifiers = [args.classifier]
 
+    # Determine the number of training lines (for the record)
     n_training_lines = 0
     if args.training is not None:
-        print("Training classifier")
         with open(args.training, encoding="utf-8") as training:
             for line in training:
                 n_training_lines += 1
-        classifier.train(args.training, args.label)
-        print("Training completed")
-    else:
-        print("Using pre-trained classifier")
 
-    classifier.verbose = args.verbose
+    # Start classification
+    for classifier_type in classifiers:
+        classifier = SklearnClassifier(classifier_type)
+        print("INFO: Classify with classifier {0}".format(classifier_type))
+        if args.training is not None:
+            print("INFO: Training classifier")
+            classifier.train(args.training, args.label)
+            print("INFO: Training completed")
+        else:
+            print("INFO: Using pre-trained classifier")
 
-    print("Starting classification of data in {0}".format(args.input))
-    predicted_classes = []
-    expected_classes = []
-    with open(args.input, encoding="utf-8") as infile:
-        for line in infile:
-            json_data = json.loads(line)
-            res = classifier.classify(json_data["text"])
-            class_name = "none"
-            if len(res) > 0:
-                class_name = res[0].class_name
-            predicted_classes.append(class_name)
-            expected_classes.append(json_data[args.label])
+        classifier.verbose = args.verbose
 
-    print("Classification completed.")
+        print("INFO: Starting classification of data in {0} with classifier {1}".format(args.input, classifier_type))
+        predicted_classes = []
+        expected_classes = []
+        with open(args.input, encoding="utf-8") as infile:
+            for line in infile:
+                json_data = json.loads(line)
+                res = classifier.classify(json_data["text"])
+                class_name = "none"
+                if len(res) > 0:
+                    class_name = res[0].class_name
+                predicted_classes.append(class_name)
+                expected_classes.append(json_data[args.label])
 
-    outfile_name = os.path.join(args.output, "results_{0}.txt".format(args.classifier))
-    with open(outfile_name, "w", encoding="utf-8") as outfile:
-        outfile.write("Classifier: {0}\n".format(args.classifier))
-        outfile.write("\n\nSTATISTICS\n\n")
-        acc = sklearn.metrics.accuracy_score(expected_classes, predicted_classes)
-        f1 = sklearn.metrics.f1_score(expected_classes, predicted_classes, average = 'micro')
-        prec  = sklearn.metrics.precision_score(expected_classes, predicted_classes, average = 'micro')
-        rec  = sklearn.metrics.recall_score(expected_classes, predicted_classes, average='micro')
+        print("INFO: Classification completed for classifier {0}".format(classifier_type))
 
-        outfile.write("Overall:\n")
-        outfile.write("Number of training records: {0}\n".format(n_training_lines))
-        outfile.write("Number of classified records: {0}\n".format(len(expected_classes)))
-        outfile.write("Number of unique classes in records: {0}\n".format(len(set(expected_classes))))
-        outfile.write("Number of unique classes found: {0}\n".format(len(set(predicted_classes))))
-        outfile.write("Accuracy: {0:.2f}\n".format(acc))
-        outfile.write("F1 (micro): {0:.2f}\n".format(f1))
-        outfile.write("Recall (micro): {0:.2f}\n".format(rec))
-        outfile.write("Precision (micro): {0:.2f}\n".format(prec))
+        outfile_name = os.path.join(args.output, "results_{0}.txt".format(classifier.classifier_type))
+        with open(outfile_name, "w", encoding="utf-8") as outfile:
+            outfile.write("Classifier: {0}\n".format(classifier_type))
+            outfile.write("\n\nSTATISTICS\n\n")
+            acc = sklearn.metrics.accuracy_score(expected_classes, predicted_classes)
+            f1 = sklearn.metrics.f1_score(expected_classes, predicted_classes, average = 'micro')
+            prec  = sklearn.metrics.precision_score(expected_classes, predicted_classes, average = 'micro')
+            rec  = sklearn.metrics.recall_score(expected_classes, predicted_classes, average='micro')
 
-        warnings.filterwarnings("ignore", category = sklearn.exceptions.UndefinedMetricWarning)
-        outfile.write("Classification report:\n{0}\n".format(sklearn.metrics.classification_report(expected_classes, predicted_classes)))
+            outfile.write("Overall:\n")
+            outfile.write("Number of training records: {0}\n".format(n_training_lines))
+            outfile.write("Number of classified records: {0}\n".format(len(expected_classes)))
+            outfile.write("Number of unique classes in records: {0}\n".format(len(set(expected_classes))))
+            outfile.write("Number of unique classes found: {0}\n".format(len(set(predicted_classes))))
 
-        outfile.write("Confusion matrix:\n{0}\n".format(
-            sklearn.metrics.confusion_matrix(expected_classes, predicted_classes)))
+            warnings.filterwarnings("ignore", category = sklearn.exceptions.UndefinedMetricWarning)
+            outfile.write("Classification report:\n{0}\n".format(sklearn.metrics.classification_report(expected_classes, predicted_classes)))
 
-    # Also store confusion matrix as image
-    imagefile_name = os.path.join(args.output, "results_{0}.jpg".format(args.classifier))
-    plot_and_store_confusion_matrix(expected_classes, predicted_classes, imagefile_name)
+            outfile.write("Confusion matrix:\n{0}\n".format(
+                sklearn.metrics.confusion_matrix(expected_classes, predicted_classes)))
+
+        # Also store confusion matrix as image
+        imagefile_name = os.path.join(args.output, "results_{0}.jpg".format(args.classifier))
+        plot_and_store_confusion_matrix(expected_classes, predicted_classes, imagefile_name)
 
             
 if __name__ == "__main__":
