@@ -1,0 +1,194 @@
+POST letter_index/_close
+
+DELETE letter_index
+
+PUT letter_index/
+{
+	"settings": {
+		"index": {
+			"number_of_replicas": "0",
+			"number_of_shards": "1"
+		},
+		"analysis": {
+			"analyzer": {
+				"default": {
+					"type": "custom",
+					"filter": ["alnumTokenFilter", "lowercase"],
+					"tokenizer": "standard"
+				}
+			},
+			"filter": {
+				"alnumTokenFilter": {
+					"type": "word_delimiter",
+					"split_on_case_change": true,
+					"split_on_numerics": true,
+					"preserve_original": true,
+					"generate_number_parts": true,
+					"generate_word_parts": true
+				}
+			}
+		}
+	}
+}
+
+# Get the mapping from the letter index
+GET letter_index/_mapping?include_type_name=true
+
+POST letter_index/_open
+
+# Example POST
+POST letter_index/_doc/ex1
+{
+    "date" : "8 July [1911]",
+    "format" : "unknown",
+    "place" : "29 Fitzroy Square, W.",
+    "source" : "Sussex",
+    "author" : "Virginia Woolf",
+    "year" : 1911,
+    "recipient" : "Leonard Woolf",
+    "title" : "571: To Leonard Woolf",
+    "text" : "8 July [1911] 29 Fitzroy Square, W. Dear Mr Wolf, Would you come down to Firle for a week end? It is a cottage in the Sussex downs. Either the 22nd or the 29th would suit. I hope you will. Yours sincerely,   Virginia Stephen"
+}
+
+# Delete the example post
+DELETE letter_index/_doc/ex1
+
+# Search in the letter index
+GET letter_index/_doc/_search?q=text:cottage
+
+# Send query as data
+GET letter_index/_doc/_search
+{
+    "query" : {
+        "match": { "text": "chocolate" }
+    },
+    "highlight" : {
+        "fields" : {
+            "text" : {}
+        }
+    }
+}
+
+# Example for a boolean query in Elasticsearchsearch
+
+POST letter_index/_search
+{
+  "query": {
+    "bool" : {
+      "must" : {
+        "term" : { "text" : "waves" }
+      },
+      "filter": {
+        "term" : { "author" : "virginia" }
+      },
+      "must_not" : {
+        "term" : { "text" : "poems" }
+      },
+      "should" : [
+        { "term" : { "text" : "dalloway" } },
+        {"term" : { "text" : "orlando" } }
+      ],
+      "minimum_should_match" : 0,
+      "boost" : 1.0
+    }
+  }
+}
+
+
+# Tokenizer demo index
+
+DELETE tokenizer_index
+
+PUT tokenizer_index/
+{
+	"settings": {
+		"index": {
+			"number_of_replicas": "0",
+			"number_of_shards": "1"
+		},
+		"analysis": {
+			"analyzer": {
+				"default": {
+					"type": "custom",
+					"char_filter": [
+            "html_strip"
+          ], 
+					"tokenizer": "whitespace",
+					"filter": ["alnumTokenFilter", "lowercase"]
+				}
+			},
+			"filter": {
+				"alnumTokenFilter": {
+					"type": "word_delimiter",
+					"split_on_case_change": true,
+					"split_on_numerics": true,
+					"preserve_original": true,
+					"generate_number_parts": true,
+					"generate_word_parts": true,
+					"catenate_words" : true,
+					"catenate_numbers" : true
+				}
+			}
+		}
+	}
+}"
+
+
+POST tokenizer_index/_open
+
+# Example POST
+POST tokenizer_index/tokenizer_mapping/ex1
+{
+    "text" : "CamelCase &ouml; Stuttgart21 free wi-fi 34-35 for all"
+}
+
+
+DELETE tokenizer_index/_doc/ex1
+
+
+GET tokenizer_index/tokenizer_mapping/_search
+{
+    "query" : {
+        "match": { "text": "Stuttgart21" }
+    },
+    "highlight" : {
+        "fields" : {
+            "text" : {}
+        }
+    }
+}
+
+GET tokenizer_index/_doc/_search
+{
+    "query" : {
+        "match": { "text": "3435" }
+    },
+    "highlight" : {
+        "fields" : {
+            "text" : {}
+        }
+    }
+}
+
+GET tokenizer_index/_doc/_search
+{
+    "query" : {
+        "match": { "text": "ö" }
+    },
+    "highlight" : {
+        "fields" : {
+            "text" : {}
+        }
+    }
+}
+
+
+GET tokenizer_index/_mapping
+
+# Inspect analysis result directly
+
+GET tokenizer_index/_analyze
+{
+    "text" : "CamelCase &ouml; <p> Stuttgart21 free wi-fi 34-35 43.44 53, 54 for all</p>"
+}
+
