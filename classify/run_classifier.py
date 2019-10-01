@@ -11,20 +11,22 @@ import sklearn.metrics
 import sklearn.exceptions
 from sklearn.metrics import confusion_matrix
 from sklearn.utils.multiclass import unique_labels
+import time
 import numpy as np
 import matplotlib.pyplot as plt
 
 import warnings
 
-def plot_and_store_confusion_matrix(y_true, y_pred,
-                          file_name,
-                          normalize=False,
-                          cmap=plt.cm.Blues,
-                          show = False):
+def plot_and_store_confusion_matrix(y_true: list,
+                                    y_pred:list,
+                                    file_name: str,
+                                    normalize=False,
+                                    cmap=plt.cm.Blues,
+                                    show = False):
     """
     This function prints and plots the confusion matrix, and saves it to a file
     :param y_true: The true classes
-    :param y_pred: The predicted clsases
+    :param y_pred: The predicted classes
     :param file_name: The file name to store the image of the confusion matrix
     :param normalize: normalize numbers (counts to relative counts)
     :param cmap: Layout
@@ -75,31 +77,35 @@ def plot_and_store_confusion_matrix(y_true, y_pred,
 
 
 def main():
-    parser = argparse.ArgumentParser(description='Classify based on a text classifier')
+    parser = argparse.ArgumentParser(description='Evaluate one or several text classifiers')
 
-    classifier_types = ["RandomForestClassifier", "KNeighborsClassifier", "MLPClassifier",
-                                    "GaussianNB", "MultinomialNB","SVC", "LogisticRegression"]
+    # All available classifier types
+    classifier_types = SklearnClassifier.supported_classifiers
 
     parser.add_argument('--training',
-                    default= r"D:\ProjectData\Uni\ltrs\data\classifier\classifier_training_data.json",
-                    help='The training data for the classifier. If "None", the existing model is loaded')
+                    default= r"D:\ProjectData\Uni\ltrs\data\classifier\classifier_data_train.json",
+                    help='The training data for the classifier. If "None", the existing model is loaded (if it exists)')
     
     parser.add_argument('--input',
-                    default= r"D:\ProjectData\Uni\ltrs\data\classifier\classifier_test_data.json",
-                    help='The texts to use for evaluation')
+                    default= r"D:\ProjectData\Uni\ltrs\data\classifier\classifier_data_eval.json",
+                    help='The text data to use for evaluation (one json per line)')
 
     parser.add_argument('--output',
                         default= r"D:\ProjectData\Uni\ltrs\data\classifier\results",
-                        help='Folder where to write the classification results')
+                        help='Folder where to write the classifier evaluation results')
 
     parser.add_argument('--classifier',
                     choices=classifier_types + ["all"],
                     default="RandomForestClassifier",
-                        help='The classifier to use')
+                        help="The classifier to use. If 'all' iterate through all available classifiers" )
+
+    parser.add_argument('--text_label',
+                    default="text",
+                    help='Label/field in the json data contains the text to classify')
 
     parser.add_argument('--label',
                     default="author",
-                    help='Label to use for training and classification')
+                    help='Label/field to use for training and classification')
 
     parser.add_argument('--verbose',
                         action='store_true',
@@ -107,13 +113,13 @@ def main():
 
     args = parser.parse_args()
 
-    print("Starting classifier {0} on {1}".format(args.classifier, args.input))
-
     # Run all classifiers
     if args.classifier == "all":
         classifiers = classifier_types
     else:
         classifiers = [args.classifier]
+
+    print("INFO: Evaluating classifier(s) {0}".format(classifiers))
 
     # Determine the number of training lines (for the record)
     n_training_lines = 0
@@ -122,14 +128,17 @@ def main():
             for line in training:
                 n_training_lines += 1
 
-    # Start classification
+    # Iterate over the classifiers
     for classifier_type in classifiers:
         classifier = SklearnClassifier(classifier_type)
-        print("INFO: Classify with classifier {0}".format(classifier_type))
+        print("INFO: Evaluating classification of classifier {0}".format(classifier_type))
+        training_time = 0
         if args.training is not None:
+            training_time = time.time()
             print("INFO: Training classifier")
-            classifier.train(args.training, args.label)
+            classifier.train(args.training, args.text_label, args.label)
             print("INFO: Training completed")
+            training_time = int(time.time()-training_time)
         else:
             print("INFO: Using pre-trained classifier")
 
@@ -138,43 +147,45 @@ def main():
         print("INFO: Starting classification of data in {0} with classifier {1}".format(args.input, classifier_type))
         predicted_classes = []
         expected_classes = []
+        # Keep track of time used
+        classification_time = time.time()
         with open(args.input, encoding="utf-8") as infile:
             for line in infile:
                 json_data = json.loads(line)
-                res = classifier.classify(json_data["text"])
+                res = classifier.classify(json_data, args.text_label)
                 class_name = "none"
                 if len(res) > 0:
                     class_name = res[0].class_name
                 predicted_classes.append(class_name)
                 expected_classes.append(json_data[args.label])
 
+        classification_time = int(time.time()-classification_time)
         print("INFO: Classification completed for classifier {0}".format(classifier_type))
 
-        outfile_name = os.path.join(args.output, "results_{0}.txt".format(classifier.classifier_type))
+        outfile_name = os.path.join(args.output, "results_{0}.txt".format(classifier_type))
         with open(outfile_name, "w", encoding="utf-8") as outfile:
+            outfile.write("#Info:\n")
             outfile.write("Classifier: {0}\n".format(classifier_type))
-            outfile.write("\n\nSTATISTICS\n\n")
-            acc = sklearn.metrics.accuracy_score(expected_classes, predicted_classes)
-            f1 = sklearn.metrics.f1_score(expected_classes, predicted_classes, average = 'micro')
-            prec  = sklearn.metrics.precision_score(expected_classes, predicted_classes, average = 'micro')
-            rec  = sklearn.metrics.recall_score(expected_classes, predicted_classes, average='micro')
-
-            outfile.write("Overall:\n")
+            outfile.write("Label: {0}\n".format(args.label))
+            outfile.write("\n#Counts:\n")
             outfile.write("Number of training records: {0}\n".format(n_training_lines))
             outfile.write("Number of classified records: {0}\n".format(len(expected_classes)))
             outfile.write("Number of unique classes in records: {0}\n".format(len(set(expected_classes))))
             outfile.write("Number of unique classes found: {0}\n".format(len(set(predicted_classes))))
+            outfile.write("\n#Performance:\n")
+            outfile.write("Seconds used for training: {0}\n".format(training_time))
+            outfile.write("Seconds used for classification: {0}\n".format(classification_time))
 
             warnings.filterwarnings("ignore", category = sklearn.exceptions.UndefinedMetricWarning)
-            outfile.write("Classification report:\n{0}\n".format(sklearn.metrics.classification_report(expected_classes, predicted_classes)))
+            outfile.write("\n#Classification report:\n{0}\n".format(sklearn.metrics.classification_report(expected_classes, predicted_classes)))
 
-            outfile.write("Confusion matrix:\n{0}\n".format(
+            outfile.write("\n#Confusion matrix:\n{0}\n".format(
                 sklearn.metrics.confusion_matrix(expected_classes, predicted_classes)))
 
         # Also store confusion matrix as image
-        imagefile_name = os.path.join(args.output, "results_{0}.jpg".format(args.classifier))
+        imagefile_name = os.path.join(args.output, "results_{0}.jpg".format(classifier_type))
         plot_and_store_confusion_matrix(expected_classes, predicted_classes, imagefile_name)
 
-            
+
 if __name__ == "__main__":
     main()

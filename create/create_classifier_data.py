@@ -6,6 +6,26 @@ Create TSV/JSON data for classification
 Splits the letter text into chunks of a certain size and puts each chunk in a separate record
 """
 
+def _get_common_prefix_from_list(string_list):
+    common_prefix = ""
+    for string in string_list:
+        if common_prefix == "":
+            common_prefix = string
+        else:
+            common_prefix = _get_common_prefix(string, common_prefix)
+    return common_prefix
+    
+def _get_common_prefix(string1, string2):
+    length = 0
+    for i in range(0, min(len(string1), len(string2))):
+        if string1[i] != string2[i]:
+            break
+        else:
+            length += 1
+
+    return string1[0:length]
+
+
 
 def main():
     parser = argparse.ArgumentParser(description='Script for creating a TSV file ready for classification')
@@ -23,6 +43,9 @@ def main():
     args = parser.parse_args() 
 
     input_files = glob.glob(args.input)
+
+    common_prefix = _get_common_prefix_from_list(input_files)
+
     print("INFO: Creating classifier data from {0} input files in {1}".format(len(input_files), args.input))
     data = []
     for input_file in input_files:
@@ -52,6 +75,7 @@ def main():
                     record["year"] = year
                     record["lang"] = language
                     record["text"] = part.strip()
+                    record["file"] = input_file[len(common_prefix):].replace("\\", "/")
                     data.append(record)
                     part = ""
 

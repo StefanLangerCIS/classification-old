@@ -29,7 +29,16 @@ class SklearnClassifier(TextClassifier):
     """
     Classifier based on ADS classifier
     """
-    def __init__(self, classifier_type, model_folder_path = None , verbose = False):
+    supported_classifiers = ["RandomForestClassifier", "KNeighborsClassifier", "MLPClassifier",
+                               "GaussianNB", "MultinomialNB","SVC", "LogisticRegression"]
+
+    def __init__(self, classifier_type :str, model_folder_path:str = None , verbose = False):
+        """
+        Initialize the classifier
+        :param classifier_type: The name of the classifiers
+        :param model_folder_path:
+        :param verbose:
+        """
         if model_folder_path:
             self.model_folder_path = model_folder_path
         else:
@@ -42,7 +51,6 @@ class SklearnClassifier(TextClassifier):
 
         # Store the file path of the training data
         self.training_data = None
-
         self.verbose = verbose
 
         if classifier_type == "KNeighborsClassifier":
@@ -59,36 +67,44 @@ class SklearnClassifier(TextClassifier):
             self.sklearn_classifier = LogisticRegression(C=1e5, solver='lbfgs', multi_class='multinomial')
         elif classifier_type == "RandomForestClassifier":
             self.sklearn_classifier = RandomForestClassifier(n_estimators=10)
+        else:
+            raise Exception("Unsupported classifier type {0}. Use one of {1}".format(classifier_type, self.supported_classifiers))
 
         self.classifier_type = classifier_type
-        self._load_models()
-        self.set_hyperparameters()
+        self.count_vectorizer = None
+        self.tfidf_transformer = None
 
-    def set_hyperparameters(self, vectorizer_min_df=10, vectorizer_max_df=0.8):
+    def set_count_vectorizer(self, count_vectorizer:CountVectorizer):
         """
-        Set the hyperparameters for the classifier
-        :param vectorizer_min_df: min document frequency for text vectorizer
-        :param vectorizer_max_df: max document frequency for text vectorizer
-        :param n_estimators: the number of estimators (trees) to use
-        :param use_sensor_code: use the supplied sensor code for classification
+        Set the count vectorizer (fit transform done during training)
+        Configurable for evaluation purposes. If this is not called, a default vectorizer is used
+        :param count_vectorizer: Vectorizer to replace the default one
         :return: None
         """
-        # Minimum/maximum document frequency for vectorizer
-        # The default values seem to be close to optimal settings after some tuning
-        self.vectorizer_min_df = vectorizer_min_df
-        self.vectorizer_max_df = vectorizer_max_df
+        self.count_vectorizer = count_vectorizer
 
-    def classify(self, text) -> List[ClassifierResult]:
+    def set_tfidf_transformer(self, tfidf_transformer:TfidfTransformer):
+        """
+        Set the tfidf transformer (fit transform done during training)
+        Configurable for evaluation purposes. If this is not called, a default transformer is used
+        :param tfidf_transformer: Transformer to replace the default one
+        :return: None
+        """
+        self.tfidf_transformer = tfidf_transformer
+
+    def classify(self, data: dict, text_label: str) -> List[ClassifierResult]:
         """
         Classify a record consisting of text and sensor codes
         :return The detected class as ClassifierResult
         """
         # print(sensor_codes)
-        data_to_classify = self._create_data_table_for_doc(text)
+        data_point = {}
+        data_point["text"] = data[text_label]
+        data_to_classify = self._create_data_table([data_point])
         # print("\nData table: \n{0}\n".format(data_to_classify))
-        matrix_counts = self.fitted_count_vectorizer.transform(data_to_classify.text)
+        matrix_counts = self.count_vectorizer.transform(data_to_classify.text)
 
-        matrix_tf = self.fitted_tfidf_transformer.transform(matrix_counts)
+        matrix_tf = self.tfidf_transformer.transform(matrix_counts)
         matrix_tf = matrix_tf.toarray()
         predicted = self.sklearn_classifier.predict(matrix_tf)
         predicted_class = predicted[0]
@@ -96,121 +112,43 @@ class SklearnClassifier(TextClassifier):
         result = ClassifierResult(predicted_class, -1, "")
         return [result]
 
-    def train(self, training_data, class_label):
+    def train(self, training_data: str, text_label: str, class_label: str) -> None:
+        """
+        Train the classifier
+        :param training_data: File name. Training data is one json per line
+        :param text_label: Json field which contains the text
+        :param class_label:  Json field which contains the label for the classes to train
+        :return: Nothing
+        """
         """
         Train the algorithm with the data from the knowledge graph
         """
         self.training_data = training_data
-        data_train = self._create_data_table_from_training_file(training_data, class_label)
+        data_train = self._create_data_table_from_training_file(training_data, text_label, class_label)
         data_train = data_train.fillna(0)
-
-        # We use str.split because the data has been pre-tokenised by us
-        self.fitted_count_vectorizer = CountVectorizer(analyzer=str.split, min_df=self.vectorizer_min_df, max_df = self.vectorizer_max_df)
-        matrix_train_counts = self.fitted_count_vectorizer.fit_transform(data_train.text)
-        self.fitted_tfidf_transformer = TfidfTransformer(use_idf=True).fit(matrix_train_counts)
-        matrix_train_tf = self.fitted_tfidf_transformer.transform(matrix_train_counts)
+        if self.count_vectorizer is None:
+            self.count_vectorizer = CountVectorizer(min_df=10, max_df=0.8)
+        matrix_train_counts = self.count_vectorizer.fit_transform(data_train.text)
+        if self.tfidf_transformer is None:
+            self.tfidf_transformer = TfidfTransformer(use_idf=True).fit(matrix_train_counts)
+        matrix_train_tf = self.tfidf_transformer.transform(matrix_train_counts)
         matrix_train_tf = matrix_train_tf.toarray()
         self.sklearn_classifier.fit(matrix_train_tf, data_train.label)
-        self._store_models()
 
-    # ******************
-    # Model management
-    # *****************
-    def _models(self):
-        """
-        Return a list of all variables which hold a part of the trained model
-               + the filename to store the model
-        """
-        var2model = [
-            ("fitted_count_vectorizer", "count_vectorizer.pkl"),
-            ("sklearn_classifier", "classifier.pkl"),
-            ("fitted_tfidf_transformer", "tfidf_transformer.pkl")
-            ]
-
-        return var2model
-
-    def _create_model_folder_name(self, id):
-        """
-        Synthesize the name of the model folder for a given model id
-        """
-        return os.path.join(self.model_folder_path, "bc_model_{0:09d}".format(id))
-
-    def _get_model_folder(self, new = False):
-        """
-        Return the model folder
-            if new is False, return the model folder with the highest id
-            if new is true, return the a new empty model folder (already created)
-        """
-        model_dirs = glob.glob(os.path.join(self.model_folder_path, "bc_model*"))
-        model_dirs.sort()
-        if len(model_dirs) > 0:
-            last = model_dirs[len(model_dirs)-1]
-        else:
-            last = None
-
-        if new is False:
-            return last
-
-        if(last):
-            number = re.sub(".*bc_model_0*", "", last)
-        else:
-            number = "0"
-        new_folder = self._create_model_folder_name(int(number) + 1)
-        os.mkdir(new_folder)
-        return new_folder
-
-    def _store_models(self):
-        """
-        Store all object fitted to the training data
-        """
-        # Create a new model folder
-        model_folder = self._get_model_folder(new = True)
-        # Store all model components
-        for (variable_name, file_name) in self._models():
-            file_path = os.path.join(model_folder, file_name)
-            model = getattr(self, variable_name)
-            joblib.dump(model, file_path)
-
-    def _load_models(self):
-        # Get the newest model folder
-        model_folder = self._get_model_folder(new = False)
-        if not model_folder:
-            return
-        # Load all models by loading them to the variables
-        for (variable_name, file_name) in self._models():
-            file_path = os.path.join(model_folder, file_name)
-            # print("Loading model {0}".format(file_name))
-            setattr(self, variable_name, joblib.load(file_path))
 
     # ********************************
     # Creation  of data to classify
     # ********************************
-    def _create_data_point(self, text):
+    def _create_data_table_from_training_file(self, training_file: str, text_label: str, class_label: str):
         """
-        Create a data point with the text and the given sensor codes
-        If extra_features is not none, the ones not in the list will be added with value 1
+        Create a data table (for training)
         """
-        datapoint = {}
-        datapoint["text"] = self._tokenize(text)
-        return datapoint
-
-    def _create_data_table_for_doc(self, text):
-        """
-        Create a data table for a single PdfXml doc
-        """
-        datapoint = self._create_data_point(text)
-        return self._create_data_table([datapoint])
-
-    def _create_data_table_from_training_file(self, training_file, class_label):
-        """
-        Create a data table based on ADS knowledge graph (for training)
-        """ 
-        # Store failur
         with open(training_file, encoding = 'utf-8') as training_fp:
             datapoints = []
             for line in training_fp:
                 record = json.loads(line)
-                datapoint = self._create_data_point(record["text"])
+                datapoint = {}
+                datapoint["text"] = record[text_label]
                 datapoint["label"] = record[class_label]
                 datapoints.append(datapoint)
 
@@ -221,65 +159,3 @@ class SklearnClassifier(TextClassifier):
         datapoints = shuffle(datapoints)
         data_table = pandas.DataFrame(datapoints)
         return data_table
-
-    def _tokenize(self, text):
-        """
-        Tokenizer. Hardcoded for Chinese. Change here for other languages
-        """  
-        tokenize = self._create_tokenizer()
-        return " ".join(tokenize(text))
-
-    def _create_tokenizer(self, lang="generic"):
-        """
-        Create and return a tokenisation function of type String->List[String].
-        :param lang: an ISO 639-1 language code
-        :return A function of type String->List[String]
-        """
-        tok_func = CountVectorizer().build_tokenizer()
-
-        return tok_func
-
-
-def main():
-    """
-    Just intended for testing
-    """
-    parser = argparse.ArgumentParser(description='Run various classifier from scikit learn')
-    parser.add_argument('--training',
-                    default = r"D:\ProjectData\Uni\ltrs\data\classifier\classifier_training_data.json",
-                    help='Data for training')
-    parser.add_argument('--test',
-                    default = r"D:\ProjectData\Uni\ltrs\data\classifier\classifier_test_data.json",
-                    help='Data for test')
-
-    args = parser.parse_args()
-
-    label = "author"
-    classifier = SklearnClassifier("RandomForestClassifier")
-    print("INFO: Training")
-    classifier.train(args.training, label)
-    print("INFO: Training completed")
-
-    with open(args.test, "r", encoding="utf-8") as test:
-        good = 0
-        bad = 0
-        for line in test:
-            json_data = json.loads(line)
-            res = classifier.classify(json_data["text"])
-            class_name = "none"
-            if len(res) > 0:
-                class_name = res[0].class_name
-            if class_name == json_data[label]:
-                #print("OK: {0}".format(class_name))
-                good += 1
-            else:
-                print("BAD: {0} found {1} : {2}".format(json_data[label], class_name, json_data["text"]))
-                bad += 1
-
-        print("Good: {0}, Bad {1}".format(good, bad))
-
-
-if __name__ == '__main__':
-    main()
-
-
