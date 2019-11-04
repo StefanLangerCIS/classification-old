@@ -6,31 +6,26 @@
 from typing import List
 from text_classifier import TextClassifier, ClassifierResult
 
-import argparse
-import glob
 import json
 import os
 import pandas
-import re
-
-from scipy.sparse import csr_matrix, hstack
 
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.neural_network import MLPClassifier
-from sklearn.externals import joblib
 from sklearn.feature_extraction.text import CountVectorizer, TfidfTransformer
 from sklearn.utils import shuffle
 from sklearn.svm import SVC
 from sklearn.naive_bayes import GaussianNB, MultinomialNB
 from sklearn.linear_model import LogisticRegression
+from sklearn.linear_model import Perceptron
 
 class SklearnClassifier(TextClassifier):
     """
     Classifier based on ADS classifier
     """
-    supported_classifiers = ["RandomForestClassifier", "KNeighborsClassifier", "MLPClassifier",
-                               "GaussianNB", "MultinomialNB","SVC", "LogisticRegression"]
+    supported_classifiers = ["RandomForestClassifier", "LogisticRegression", "MLPClassifier",
+                               "GaussianNB", "MultinomialNB", "KNeighborsClassifier", "SVC", "Perceptron"]
 
     def __init__(self, classifier_type :str, model_folder_path:str = None , verbose = False):
         """
@@ -54,7 +49,7 @@ class SklearnClassifier(TextClassifier):
         self.verbose = verbose
 
         if classifier_type == "KNeighborsClassifier":
-            self.sklearn_classifier = KNeighborsClassifier()
+            self.sklearn_classifier = KNeighborsClassifier(n_jobs=3)
         elif classifier_type == "MLPClassifier":
             self.sklearn_classifier = MLPClassifier()
         elif classifier_type == "SVC":
@@ -67,6 +62,8 @@ class SklearnClassifier(TextClassifier):
             self.sklearn_classifier = LogisticRegression(C=1e5, solver='lbfgs', multi_class='multinomial')
         elif classifier_type == "RandomForestClassifier":
             self.sklearn_classifier = RandomForestClassifier(n_estimators=10)
+        elif classifier_type == "Perceptron":
+            self.sklearn_classifier = Perceptron()
         else:
             raise Exception("Unsupported classifier type {0}. Use one of {1}".format(classifier_type, self.supported_classifiers))
 
@@ -127,7 +124,7 @@ class SklearnClassifier(TextClassifier):
         data_train = self._create_data_table_from_training_file(training_data, text_label, class_label)
         data_train = data_train.fillna(0)
         if self.count_vectorizer is None:
-            self.count_vectorizer = CountVectorizer(min_df=10, max_df=0.8)
+            self.count_vectorizer = CountVectorizer(min_df=10, max_df=0.8, ngram_range=(1, 1))
         matrix_train_counts = self.count_vectorizer.fit_transform(data_train.text)
         if self.tfidf_transformer is None:
             self.tfidf_transformer = TfidfTransformer(use_idf=True).fit(matrix_train_counts)
