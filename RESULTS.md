@@ -35,6 +35,10 @@ This page contains the classification results for the various algorithms, letter
        [   3   39    3    0  182    0    1]
        [   0    0    1   19    0 1881    0]
        [   9    7   12    0   17    0  582]]
+			 
+### Confusion Matrix (img)
+
+![Confusion matrix](img/results_Perceptron_AuthorsWordBiGrams.jpg)
 
 ## Classifier: Perceptron with single words
 - Algorithm: Scikit-learn perceptron
@@ -75,3 +79,7 @@ This page contains the classification results for the various algorithms, letter
 	 [   0   78    0    0  146    0    4]
 	 [   0    0    1   44    0 1856    0]
 	 [   4   21    2    0    8    0  592]]
+	 
+### Confusion Matrix (img)
+
+![Confusion matrix](img/results_Perceptron_AuthorsDefault_Settings.jpg)
