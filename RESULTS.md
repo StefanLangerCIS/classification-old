@@ -83,3 +83,88 @@ This page contains the classification results for the various algorithms, letter
 ### Confusion Matrix (img)
 
 ![Confusion matrix](img/results_Perceptron_AuthorsDefault_Settings.jpg)
+
+## Classifier: Logistic Regression with word bi-grams
+- Algorithm: Scikit-learn logistic regression
+- Features: word bigrams in addition to single words
+- Reported by: Shuzhou Yuan, Shanshan Bai
+
+### Performance
+
+- Seconds used for training: 80
+- Seconds used for classification: 0.05
+        
+	
+### Classification report
+                            precision    recall  f1-score   support
+
+               Franz Kafka       0.90      0.88      0.89      1017
+        Friedrich Schiller       0.81      0.81      0.81       978
+              Henrik Ibsen       1.00      0.98      0.99      3209
+               James Joyce       0.96      0.88      0.92      2459
+    Johann Wolfgang von Goethe   0.77      0.76      0.76       817
+            Virginia Woolf       0.96      0.99      0.97      6872
+             Wilhelm Busch       0.93      0.96      0.95      2232
+
+                 micro avg       0.94      0.94      0.94     17584
+                 macro avg       0.90      0.89      0.90     17584
+              weighted avg       0.94      0.94      0.94     17584
+
+
+
+### Confusion matrix
+	[[ 900   18    0    0   28    0   71]
+ 	[  24  797    0    0  125    0   32]
+ 	[  10   10 3150    6   10    4   19]
+ 	[   3    0    4 2161    0  289    2]
+ 	[  24  140    0    0  618    1   34]
+ 	[   0    0    0   94    0 6778    0]
+ 	[  39   19    1    0   26    0 2147]]
+			  
+### Confusion Matrix (img)
+
+![Confusion matrix](img/results_LogisticRegression_Authorbigramm.jpg)
+
+## Classifier: Logistic Regression with single words
+- Algorithm: Scikit-learn logistic regression
+- Features: single words
+- Reported by: Shuzhou Yuan, Shanshan Bai
+
+
+### Performance: 
+
+- Seconds used for training: 11
+- Seconds used for classification: 0.01
+
+
+### Classification report
+                            precision    recall  f1-score   support
+
+               Franz Kafka       0.92      0.86      0.89      1051
+        Friedrich Schiller       0.80      0.81      0.80       978
+              Henrik Ibsen       1.00      0.99      0.99      3188
+               James Joyce       0.95      0.90      0.92      2500
+    Johann Wolfgang von Goethe   0.76      0.76      0.76       803
+            Virginia Woolf       0.97      0.98      0.97      6871
+             Wilhelm Busch       0.93      0.96      0.95      2193
+
+                 micro avg       0.94      0.94      0.94     17584
+                 macro avg       0.90      0.89      0.90     17584
+              weighted avg       0.94      0.94      0.94     17584
+
+
+ 
+### Confusion matrix: 
+
+	[[ 907   25    3    0   25    0   91]
+ 	[  20  790    0    0  143    0   25]
+ 	[   8   11 3143    5    4    3   14]
+ 	[   2    0    4 2253    2  238    1]
+ 	[  11  147    1    0  610    1   33]
+ 	[   0    0    0  125    0 6745    1]
+ 	[  43   19    1    0   16    0 2114]]
+	 
+### Confusion Matrix (img)
+
+![Confusion matrix](img/results_LogisticRegression_Authorsingleword.jpg)
+
