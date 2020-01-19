@@ -582,5 +582,129 @@ Johann Wolfgang von Goethe       0.68      0.29      0.41       228
 
 ![Confusion matrix](img/results_RandomForestClassifierBootstrap.jpg)
 
+#Info:
+Classifier: Gradient boosting (m3-l02)
+Label: author
+
+#Counts:
+Number of training records: 39077
+Number of classified records: 4881
+Number of unique classes in records: 7
+Number of unique classes found: 7
+
+#Performance:
+Seconds used for training: 404
+Seconds used for classification: 21
+
+#Classification report:
+                            precision    recall  f1-score   support
+
+               Franz Kafka       0.83      0.75      0.79       280
+        Friedrich Schiller       0.70      0.76      0.73       266
+              Henrik Ibsen       1.00      0.98      0.99       897
+               James Joyce       0.92      0.80      0.85       682
+Johann Wolfgang von Goethe       0.69      0.57      0.63       228
+            Virginia Woolf       0.93      0.98      0.95      1901
+             Wilhelm Busch       0.85      0.93      0.88       627
+
+                  accuracy                           0.90      4881
+                 macro avg       0.85      0.82      0.83      4881
+              weighted avg       0.90      0.90      0.90      4881
+
+
+#Confusion matrix:
+[[ 211    9    0    0    6    0   54]
+ [  11  201    0    0   37    0   17]
+ [   5    2  880    3    3    0    4]
+ [   0    0    0  543    0  139    0]
+ [   9   61    0    0  131    0   27]
+ [   0    0    0   44    0 1854    3]
+ [  17   13    1    1   14    0  581]]
+
+### Confusion Matrix (img)
+
+![Confusion matrix](img/results_m3-l02.pdf)
+
+# Classification results for author classification
+
+## Classifier: Decision Trees
+- Algorithm: Scikit-learn DecisionTreeClassifier
+- Features: criterion='gini',splitter='best'
+- Reported by: Alexander Vordermaier
+
+### Performance
+
+- Seconds used for training: 487
+- Seconds used for classification: 5
+
+### Classification report
+                                  precision    recall  f1-score   support
+
+                     Franz Kafka       0.55      0.54      0.54       280
+              Friedrich Schiller       0.45      0.47      0.46       266
+                    Henrik Ibsen       0.97      0.97      0.97       897
+                     James Joyce       0.69      0.72      0.70       682
+      Johann Wolfgang von Goethe       0.41      0.38      0.40       228
+                  Virginia Woolf       0.90      0.88      0.89      1901
+                   Wilhelm Busch       0.76      0.77      0.76       627
+
+                        accuracy                           0.80      4881
+                       macro avg       0.67      0.68      0.68      4881
+                    weighted avg       0.80      0.80      0.80      4881
+
+
+
+### Confusion matrix
+      [[ 150   35    6    0   25    0   64]
+	   [  33  126    4    0   64    0   39]
+       [   1    7  873    3    3    1    9]
+       [   0    0    2  494    0  186    0]
+	   [  23   75    1    0   87    0   42]
+	   [   0    0    5  221    0 1674    1]
+	   [  68   38    5    2   33    0  481]]
+			 
+### Confusion Matrix (img)
+
+![Confusion matrix](img/results_DecisionTreeClassifier_Authors.jpg)
+
+# Classification results for Language classification
+
+## Classifier: Decision Trees
+- Algorithm: Scikit-learn DecisionTreeClassifier
+- Features: criterion='gini',splitter='best'
+- Reported by: Alexander Vordermaier
+
+### Performance
+
+- Seconds used for training: 390
+- Seconds used for classification: 11
+
+### Classification report
+                                  precision    recall  f1-score   support
+
+                              da       0.99      0.99      0.99       838
+							  de       1.00      1.00      1.00      1443
+							  en       1.00      1.00      1.00      2517
+							  fr       0.97      0.92      0.94        36
+							  it       0.79      0.87      0.83        31
+						 unknown       0.50      0.31      0.38        16
+
+                        accuracy                           0.99      4881
+				       macro avg       0.87      0.85      0.86      4881
+					weighted avg       0.99      0.99      0.99      4881
+
+
+
+### Confusion matrix
+      [[ 832    1    1    0    0    4]
+	   [   4 1436    2    0    0    1]
+	   [   2    0 2511    0    4    0]
+	   [   0    0    2   33    1    0]
+	   [   0    0    3    1   27    0]
+	   [   4    3    2    0    2    5]]
+			 
+### Confusion Matrix (img)
+
+![Confusion matrix](img/results_DecisionTreeClassifier_Language.jpg)
 
 
