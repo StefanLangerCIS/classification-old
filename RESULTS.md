@@ -708,3 +708,81 @@ Johann Wolfgang von Goethe       0.69      0.57      0.63       228
 ![Confusion matrix](img/results_DecisionTreeClassifier_Language.jpg)
 
 
+## Classifier: Ridge Classifier
+- Algorithm: Scikit-learn RidgeClassifier
+- Features: single words
+- Reported by: Lisa Woller
+
+### Performance
+
+- Seconds used for training: 118
+- Seconds used for classification: 8
+
+### Classification report
+                                  precision    recall  f1-score   support
+
+                     Franz Kafka       0.93      0.95      0.94       280
+              Friedrich Schiller       0.79      0.85      0.82       266
+                    Henrik Ibsen       1.00      0.98      0.99       897
+                     James Joyce       0.97      0.91      0.94       682
+      Johann Wolfgang von Goethe       0.81      0.71      0.76       228
+                  Virginia Woolf       0.97      0.99      0.98      1901
+                   Wilhelm Busch       0.95      0.97      0.96       627
+
+                        accuracy                           0.95      4881
+                       macro avg       0.92      0.91      0.91      4881
+                    weighted avg       0.95      0.95      0.95      4881
+
+
+### Confusion matrix
+      [[ 265    2    0    0    1    0   12]
+       [   4  225    0    0   32    0    5]
+       [   2    4  883    4    2    0    2]
+       [   0    0    0  622    0   60    0]
+       [   3   47    0    0  163    0   15]
+       [   0    0    0   15    0 1886    0]
+       [  10    6    1    0    2    0  608]]
+			 
+### Confusion Matrix (img)
+
+![Confusion matrix](img/results_RidgeClassifier_Authors.jpg)
+
+
+## Classifier: Ridge Classifier with text preprocessing
+- Algorithm: Scikit-learn RidgeClassifier
+- Features: single words after applying preprocessing
+- Reported by: Lisa Woller
+
+### Performance
+
+- Seconds used for training: 201
+- Seconds used for classification: 47
+
+### Classification report
+                                  precision    recall  f1-score   support
+
+                     Franz Kafka       0.93      0.94      0.94       280
+              Friedrich Schiller       0.79      0.85      0.82       266
+                    Henrik Ibsen       1.00      0.98      0.99       897
+                     James Joyce       0.97      0.91      0.94       682
+      Johann Wolfgang von Goethe       0.81      0.73      0.77       228
+                  Virginia Woolf       0.97      0.99      0.98      1901
+                   Wilhelm Busch       0.95      0.97      0.96       627
+
+                        accuracy                           0.95      4881
+                       macro avg       0.92      0.91      0.91      4881
+                    weighted avg       0.95      0.95      0.95      4881
+
+
+### Confusion matrix
+      [[ 264    2    0    0    1    0   13]
+       [   4  225    0    0   32    0    5]
+       [   2    5  881    4    2    0    3]
+       [   0    0    0  619    0   63    0]
+       [   3   46    0    0  166    0   13]
+       [   0    0    0   16    0 1885    0]
+       [  11    6    1    0    3    0  606]]
+			 
+### Confusion Matrix (img)
+
+![Confusion matrix](img/results_RidgeClassifier_preprocessed_Authors.jpg)
