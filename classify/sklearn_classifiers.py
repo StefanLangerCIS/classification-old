@@ -22,7 +22,7 @@ from sklearn.linear_model import Perceptron
 
 class SklearnClassifier(TextClassifier):
     """
-    Classifier based on ADS classifier
+    Classify with sklearn classifiers
     """
     supported_classifiers = ["RandomForestClassifier", "LogisticRegression", "MLPClassifier",
                                "GaussianNB", "MultinomialNB", "KNeighborsClassifier", "SVC", "Perceptron"]

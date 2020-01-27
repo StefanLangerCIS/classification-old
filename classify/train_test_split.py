@@ -12,7 +12,7 @@ def main():
 
     parser.add_argument('--input',
                     default= r"D:\ProjectData\Uni\ltrs\data\classifier\classifier_data.json",
-                    help='All data, the records to be split. One json record per line')
+                    help='All data, the data_records to be split. One json record per line')
     
     parser.add_argument('--output_folder',
                     default= r"D:\ProjectData\Uni\ltrs\data\classifier",

@@ -26,14 +26,13 @@ def _get_common_prefix(string1, string2):
     return string1[0:length]
 
 
-
 def main():
-    parser = argparse.ArgumentParser(description='Script for creating a TSV file ready for classification')
+    parser = argparse.ArgumentParser(description='Script for creating a json file ready for classification')
     parser.add_argument('--input',
-                        default = r'D:\ProjectData\Uni\ltrs\data\letters\*\json\*.json',
+                        default = r'D:\ProjectData\Uni\ltrs\letters\*\json\*.json',
                         help='The input directory + input file pattern')
     parser.add_argument('--output',
-                    default = r'D:\ProjectData\Uni\ltrs\data\classifier\classifier_data.json',
+                    default = r'D:\ProjectData\Uni\ltrs\classifier\classifier_data.json',
                     help='The output directory the classifier data')
     parser.add_argument('--format',
                         choices=['json', 'tsv'],

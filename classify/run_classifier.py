@@ -1,5 +1,5 @@
 """
-Evaluate any of the classifier, print a confusion matrix and create further evalution metrics
+Evaluate any of the classifiers, print a confusion matrix and create further evalution metrics
 """
 import argparse
 from datetime import datetime
@@ -83,15 +83,15 @@ def main():
     classifier_types = SklearnClassifier.supported_classifiers
 
     parser.add_argument('--training',
-                    default= r"D:\ProjectData\Uni\ltrs\data\classifier\classifier_data_train.json",
+                    default= r"D:\ProjectData\Uni\ltrs\classifier\classifier_data_train.json",
                     help='The training data for the classifier. If "None", the existing model is loaded (if it exists)')
     
     parser.add_argument('--input',
-                    default= r"D:\ProjectData\Uni\ltrs\data\classifier\classifier_data_eval.json",
+                    default= r"D:\ProjectData\Uni\ltrs\classifier\classifier_data_eval.json",
                     help='The text data to use for evaluation (one json per line)')
 
     parser.add_argument('--output',
-                        default= r"D:\ProjectData\Uni\ltrs\data\classifier\results",
+                        default= r"D:\ProjectData\Uni\classification-results",
                         help='Folder where to write the classifier evaluation results')
 
     parser.add_argument('--classifier',
@@ -168,9 +168,9 @@ def main():
             outfile.write("Classifier: {0}\n".format(classifier_type))
             outfile.write("Label: {0}\n".format(args.label))
             outfile.write("\n#Counts:\n")
-            outfile.write("Number of training records: {0}\n".format(n_training_lines))
-            outfile.write("Number of classified records: {0}\n".format(len(expected_classes)))
-            outfile.write("Number of unique classes in records: {0}\n".format(len(set(expected_classes))))
+            outfile.write("Number of training data_records: {0}\n".format(n_training_lines))
+            outfile.write("Number of classified data_records: {0}\n".format(len(expected_classes)))
+            outfile.write("Number of unique classes in data_records: {0}\n".format(len(set(expected_classes))))
             outfile.write("Number of unique classes found: {0}\n".format(len(set(predicted_classes))))
             outfile.write("\n#Performance:\n")
             outfile.write("Seconds used for training: {0}\n".format(training_time))
