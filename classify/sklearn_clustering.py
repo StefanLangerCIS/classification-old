@@ -7,7 +7,7 @@ from text_clustering import TextClustering, Cluster
 from collections import Counter
 import pandas
 import numpy as np
-from sklearn.cluster import KMeans, AgglomerativeClustering
+from sklearn.cluster import KMeans, AgglomerativeClustering, OPTICS
 from sklearn.feature_extraction.text import CountVectorizer, TfidfTransformer
 from sklearn.neighbors.nearest_centroid import NearestCentroid
 from sklearn.utils import shuffle
@@ -18,12 +18,14 @@ class SklearnClustering(TextClustering):
     Clustering with sklearn cluster algorithms
     """
     supported_algos = ["KMeans", "AgglomerativeClustering_ward", "AgglomerativeClustering_single",
-                               "AgglomerativeClustering_complete", "AgglomerativeClustering_average"]
+                               "AgglomerativeClustering_complete", "AgglomerativeClustering_average", "OPTICS"]
 
     def __init__(self, algorithm :str, n_clusters:int = 5, verbose = False):
         """
         Initialize the classifier
-        :param algorithm: The name of the classifiers
+        :param algorithm: The name of the clustering algorithm
+        :param n_c
+        lusters: Number of clusters. Ignored for density based algorithms
         :param verbose: Print more...
         """
         # Store the file path of the training data
@@ -35,6 +37,8 @@ class SklearnClustering(TextClustering):
         elif algorithm.startswith("AgglomerativeClustering"):
             algo, linkage_method = algorithm.split("_")
             self.sklearn_clustering = AgglomerativeClustering(linkage=linkage_method, n_clusters=n_clusters)
+        elif algorithm == "OPTICS":
+            self.sklearn_clustering = OPTICS(min_samples=5)
         else:
             raise Exception("Unsupported clustering type {0}. Use one of {1}".format(algorithm, self.supported_algos))
 
