@@ -1,5 +1,5 @@
 """ Classifiers based on the sklearn
-    The all have the same interface, so the can be wrapped in one class
+    They all have the same interface, so the can be wrapped in one class
     Derived from TextClassifier
 """
 
@@ -10,15 +10,19 @@ import json
 import os
 import pandas
 
+# Sklearn: Classifiers
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.neural_network import MLPClassifier
-from sklearn.feature_extraction.text import CountVectorizer, TfidfTransformer
-from sklearn.utils import shuffle
-from sklearn.svm import SVC
 from sklearn.naive_bayes import GaussianNB, MultinomialNB
 from sklearn.linear_model import LogisticRegression
 from sklearn.linear_model import Perceptron
+
+# Sklearn: Other utils
+from sklearn.feature_extraction.text import CountVectorizer, TfidfTransformer
+from sklearn.utils import shuffle
+from sklearn.svm import SVC
+
 
 class SklearnClassifier(TextClassifier):
     """
