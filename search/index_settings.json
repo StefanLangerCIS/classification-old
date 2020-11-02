@@ -23,5 +23,13 @@
 				}
 			}
 		}
-	}
+	},
+	
+	"mappings": {
+      "properties": {
+        "lang":     { "type": "keyword"  },
+        "format":      { "type": "keyword"  },
+		"year":      { "type": "integer", "ignore_malformed": true  }
+      }
+  }
 }
