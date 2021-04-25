@@ -5,6 +5,8 @@ POST letter_index/_close
 # Delete an index
 DELETE letter_index
 
+
+
 # Put the index settings
 PUT letter_index/
 {
@@ -35,6 +37,8 @@ PUT letter_index/
 	}
 }
 
+# Get letter index meta data (complete)
+GET letter_index
 # Get the mapping from the letter index
 GET letter_index/_mapping
 
@@ -73,7 +77,6 @@ GET letter_index/_search
 }
 
 # Example for a boolean query in Elasticsearchsearch
-
 POST letter_index/_search
 {
   "query": {
