@@ -1,7 +1,11 @@
+# Open and close an index
+POST letter_index/_open
 POST letter_index/_close
 
+# Delete an index
 DELETE letter_index
 
+# Put the index settings
 PUT letter_index/
 {
 	"settings": {
@@ -32,9 +36,8 @@ PUT letter_index/
 }
 
 # Get the mapping from the letter index
-GET letter_index/_mapping?include_type_name=true
+GET letter_index/_mapping
 
-POST letter_index/_open
 
 # Example POST
 POST letter_index/_doc/ex1
@@ -54,10 +57,10 @@ POST letter_index/_doc/ex1
 DELETE letter_index/_doc/ex1
 
 # Search in the letter index
-GET letter_index/_doc/_search?q=text:cottage
+GET letter_index/_search?q=text:cottage
 
 # Send query as data
-GET letter_index/_doc/_search
+GET letter_index/_search
 {
     "query" : {
         "match": { "text": "chocolate" }
