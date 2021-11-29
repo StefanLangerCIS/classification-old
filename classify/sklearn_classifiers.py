@@ -2,7 +2,7 @@
     They all have the same interface, so the can be wrapped in one class
     Derived from TextClassifier
 """
-
+import re
 from typing import List
 from text_classifier import TextClassifier, ClassifierResult
 
@@ -11,6 +11,7 @@ import os
 import pandas
 
 # Sklearn: Classifiers
+from sklearn.tree import DecisionTreeClassifier, export_text
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.neural_network import MLPClassifier
@@ -28,7 +29,7 @@ class SklearnClassifier(TextClassifier):
     """
     Classify with sklearn classifiers
     """
-    supported_classifiers = ["RandomForestClassifier", "LogisticRegression", "MLPClassifier",
+    supported_classifiers = ["DecisionTreeClassifier", "RandomForestClassifier", "LogisticRegression", "MLPClassifier",
                                "GaussianNB", "MultinomialNB", "KNeighborsClassifier", "SVC", "Perceptron"]
 
     def __init__(self, classifier_type :str, model_folder_path:str = None , verbose = False):
@@ -66,6 +67,8 @@ class SklearnClassifier(TextClassifier):
             self.sklearn_classifier = LogisticRegression(C=1e5, solver='lbfgs', multi_class='multinomial')
         elif classifier_type == "RandomForestClassifier":
             self.sklearn_classifier = RandomForestClassifier(n_estimators=10)
+        elif classifier_type == "DecisionTreeClassifier":
+            self.sklearn_classifier = DecisionTreeClassifier(min_samples_split=10)
         elif classifier_type == "Perceptron":
             self.sklearn_classifier = Perceptron()
         else:
@@ -135,7 +138,46 @@ class SklearnClassifier(TextClassifier):
         matrix_train_tf = self.tfidf_transformer.transform(matrix_train_counts)
         matrix_train_tf = matrix_train_tf.toarray()
         self.sklearn_classifier.fit(matrix_train_tf, data_train.label)
+        self.print_model_information()
 
+    def print_model_information(self) -> None:
+        """
+        Print detailed information about the model
+        :return: None
+        """
+        if self.classifier_type == "DecisionTreeClassifier":
+            self.print_decision_tree()
+        else:
+            pass
+
+    def print_decision_tree(self):
+        """
+        Print decision tree rules
+        :return: 
+        """
+        rules_text = export_text(self.sklearn_classifier, max_depth=100)
+        # Vocabulary for replacement in the data which contains
+        # feature numbers only
+        vocab = self.count_vectorizer.vocabulary_
+        vocabulary = dict((feature, word) for word, feature in vocab.items())
+        rules = rules_text.split("\n")
+        lines = []
+        for rule in rules:
+            if "feature_" in rule:
+                word_id_str = re.sub(".*feature_([0-9]+).*", r"\1", rule)
+                word_id = int(word_id_str)
+                if word_id in vocabulary:
+                    word = vocabulary[word_id]
+                else:
+                    word = "UNK"
+                rule = rule.replace("feature_{}".format(word_id_str), word)
+                lines.append(rule)
+            else:
+                lines.append(rule)
+
+        with open(os.path.join(self.model_folder_path, "decision_rules.txt"), 'w', encoding='utf-8') as out:
+            for line in lines:
+                out.write(line + '\n')
 
     # ********************************
     # Creation  of data to classify
@@ -155,8 +197,12 @@ class SklearnClassifier(TextClassifier):
 
         return self._create_data_table(datapoints)
 
-    def _create_data_table(self, datapoints):
-        # shuffle for good measure
+    def _create_data_table(self, datapoints: List) -> pandas.DataFrame:
+        """
+        Shuffle for good measures
+        :param datapoints:
+        :return:
+        """
         datapoints = shuffle(datapoints)
         data_table = pandas.DataFrame(datapoints)
         return data_table
