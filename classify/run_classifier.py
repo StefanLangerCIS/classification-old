@@ -20,7 +20,7 @@ import warnings
 def plot_and_store_confusion_matrix(y_true: list,
                                     y_pred:list,
                                     file_name: str,
-                                    normalize=False,
+                                    normalize=True,
                                     cmap=plt.cm.Blues,
                                     show = False):
     """
