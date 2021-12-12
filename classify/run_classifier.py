@@ -83,21 +83,21 @@ def main():
     classifier_types = SklearnClassifier.supported_classifiers
 
     parser.add_argument('--training',
-                    default= r"D:\ProjectData\Uni\ltrs\classifier\classifier_data_train.json",
+                    default= r"C:\ProjectData\Uni\ltrs\classifier\classifier_data_train.json",
                     help='The training data for the classifier. If "None", the existing model is loaded (if it exists)')
     
     parser.add_argument('--input',
-                    default= r"D:\ProjectData\Uni\ltrs\classifier\classifier_data_eval.json",
+                    default= r"C:\ProjectData\Uni\ltrs\classifier\classifier_data_eval.json",
                     help='The text data to use for evaluation (one json per line)')
 
     parser.add_argument('--output',
-                        default= r"D:\ProjectData\Uni\classification-results",
+                        default= r"C:\ProjectData\Uni\classif\classification-results",
                         help='Folder where to write the classifier evaluation results')
 
     parser.add_argument('--classifier',
                     choices=classifier_types + ["all"],
-                    default="RandomForestClassifier",
-                        help="The classifier to use. If 'all' iterate through all available classifiers" )
+                    default="DecisionTreeClassifier",
+                    help="The classifier to use. If 'all' iterate through all available classifiers" )
 
     parser.add_argument('--text_label',
                     default="text",

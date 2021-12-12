@@ -2,6 +2,7 @@
     They all have the same interface, so the can be wrapped in one class
     Derived from TextClassifier
 """
+import random
 import re
 from typing import List
 from text_classifier import TextClassifier, ClassifierResult
@@ -104,7 +105,7 @@ class SklearnClassifier(TextClassifier):
         # print(sensor_codes)
         data_point = {}
         data_point["text"] = data[text_label]
-        data_to_classify = self._create_data_table([data_point])
+        data_to_classify = create_data_table([data_point])
         # print("\nData table: \n{0}\n".format(data_to_classify))
         matrix_counts = self.count_vectorizer.transform(data_to_classify.text)
 
@@ -128,7 +129,7 @@ class SklearnClassifier(TextClassifier):
         Train the algorithm with the data from the knowledge graph
         """
         self.training_data = training_data
-        data_train = self._create_data_table_from_training_file(training_data, text_label, class_label)
+        data_train = create_data_table_from_training_file(training_data, text_label, class_label)
         data_train = data_train.fillna(0)
         if self.count_vectorizer is None:
             self.count_vectorizer = CountVectorizer(min_df=10, max_df=0.8, ngram_range=(1, 1))
@@ -179,30 +180,35 @@ class SklearnClassifier(TextClassifier):
             for line in lines:
                 out.write(line + '\n')
 
-    # ********************************
-    # Creation  of data to classify
-    # ********************************
-    def _create_data_table_from_training_file(self, training_file: str, text_label: str, class_label: str):
-        """
-        Create a data table (for training)
-        """
-        with open(training_file, encoding = 'utf-8') as training_fp:
-            datapoints = []
-            for line in training_fp:
-                record = json.loads(line)
-                datapoint = {}
-                datapoint["text"] = record[text_label]
-                datapoint["label"] = record[class_label]
-                datapoints.append(datapoint)
 
-        return self._create_data_table(datapoints)
+# ********************************
+# Creation  of data to classify
+# ********************************
+def create_data_table_from_training_file(training_file: str, text_label: str, class_label: str, mx: int = 0):
+    """
+    Create a data table (for training)
+    """
+    with open(training_file, encoding = 'utf-8') as training_fp:
+        data_points = []
+        for line in training_fp:
+            record = json.loads(line)
+            data_point = {}
+            data_point["text"] = record[text_label]
+            data_point["label"] = record[class_label]
+            data_points.append(data_point)
 
-    def _create_data_table(self, datapoints: List) -> pandas.DataFrame:
-        """
-        Shuffle for good measures
-        :param datapoints:
-        :return:
-        """
-        datapoints = shuffle(datapoints)
-        data_table = pandas.DataFrame(datapoints)
-        return data_table
+    if mx is not None and mx > 0:
+        data_points = random.sample(data_points, mx)
+
+    return create_data_table(data_points)
+
+
+def create_data_table(datapoints: List) -> pandas.DataFrame:
+    """
+    Shuffle for good measures
+    :param datapoints:
+    :return:
+    """
+    datapoints = shuffle(datapoints)
+    data_table = pandas.DataFrame(datapoints)
+    return data_table
