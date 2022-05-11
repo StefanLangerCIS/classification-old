@@ -5,8 +5,6 @@ POST letter_index/_close
 # Delete an index
 DELETE letter_index
 
-
-
 # Put the index settings
 PUT letter_index/
 {
@@ -76,7 +74,7 @@ GET letter_index/_search
     }
 }
 
-# Example for a boolean query in Elasticsearchsearch
+# Example for a complex boolean query in Elasticsearchsearch
 POST letter_index/_search
 {
   "query": {
@@ -101,10 +99,71 @@ POST letter_index/_search
 }
 
 
-# Tokenizer demo index
-
+# Tokenizer demo index: create/open
 DELETE tokenizer_index
+POST tokenizer_index/_open
 
+# A very simple tokenizer - whitespace 
+PUT tokenizer_index/
+{
+	"settings": {
+		"index": {
+			"number_of_replicas": "0",
+			"number_of_shards": "1"
+		},
+		"analysis": {
+			"analyzer": {
+				"default": {
+					"type": "custom",
+					"tokenizer": "whitespace",
+					"filter": ["lowercase"]
+				}
+			}
+		}
+	}
+}
+
+# Standard tokenizer (also handles punctuation)
+PUT tokenizer_index/
+{
+	"settings": {
+		"index": {
+			"number_of_replicas": "0",
+			"number_of_shards": "1"
+		},
+		"analysis": {
+			"analyzer": {
+				"default": {
+					"type": "custom",
+					"tokenizer": "standard",
+					"filter": ["uppercase"]
+				}
+			}
+		}
+	}
+}
+
+# Thai tokenizer
+PUT tokenizer_index/
+{
+	"settings": {
+		"index": {
+			"number_of_replicas": "0",
+			"number_of_shards": "1"
+		},
+		"analysis": {
+			"analyzer": {
+				"default": {
+					"type": "custom",
+					"tokenizer": "thai",
+					"filter": ["lowercase"]
+				}
+			}
+		}
+	}
+}
+
+# More complex tokenizer/analyzer
 PUT tokenizer_index/
 {
 	"settings": {
@@ -137,22 +196,19 @@ PUT tokenizer_index/
 			}
 		}
 	}
-}"
-
-
-POST tokenizer_index/_open
-
-# Example POST
-POST tokenizer_index/tokenizer_mapping/ex1
-{
-    "text" : "CamelCase &ouml; Stuttgart21 free wi-fi 34-35 for all"
 }
 
+# Example POST
+POST tokenizer_index/ex1
+{
+    "text" : "CamelCase &ouml; Stuttgart21 free wi-fi 34-35 for all."
+}
 
+# Delete document again
 DELETE tokenizer_index/_doc/ex1
 
-
-GET tokenizer_index/tokenizer_mapping/_search
+# Search
+GET tokenizer_index/_search
 {
     "query" : {
         "match": { "text": "Stuttgart21" }
@@ -164,7 +220,7 @@ GET tokenizer_index/tokenizer_mapping/_search
     }
 }
 
-GET tokenizer_index/_doc/_search
+GET tokenizer_index/_search
 {
     "query" : {
         "match": { "text": "3435" }
@@ -176,7 +232,7 @@ GET tokenizer_index/_doc/_search
     }
 }
 
-GET tokenizer_index/_doc/_search
+GET tokenizer_index/_search
 {
     "query" : {
         "match": { "text": "ö" }
@@ -188,13 +244,18 @@ GET tokenizer_index/_doc/_search
     }
 }
 
-
+# Get the mapping
 GET tokenizer_index/_mapping
 
 # Inspect analysis result directly
 
 GET tokenizer_index/_analyze
 {
-    "text" : "CamelCase &ouml; <p> Stuttgart21 free wi-fi 34-35 43.44 53, 54 for all</p>"
+    "text" : "CamelCase &ouml; <p> Stuttgart21 free wi-fi 34-35 43.44 53, 54 for all.</p>"
+}
+
+GET tokenizer_index/_analyze
+{
+    "text" : "คนไทยบริโภคข้าวเป็นอาหารห"
 }
 
