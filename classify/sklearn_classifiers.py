@@ -57,7 +57,7 @@ class SklearnClassifier(TextClassifier):
         if classifier_type == "KNeighborsClassifier":
             self.sklearn_classifier = KNeighborsClassifier(n_jobs=3)
         elif classifier_type == "MLPClassifier":
-            self.sklearn_classifier = MLPClassifier()
+            self.sklearn_classifier = MLPClassifier(hidden_layer_sizes=(50,), activation='logistic')
         elif classifier_type == "SVC":
             self.sklearn_classifier = SVC(kernel="linear", C=0.025)
         elif classifier_type == "GaussianNB":
