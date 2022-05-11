@@ -2,27 +2,15 @@
 Evaluate any of the classifiers, print a confusion matrix and create further evalution metrics
 """
 import argparse
-from datetime import datetime
-import json
 import os
-import sys
 from sklearn_gridsearch import SklearnGridSearch
-import sklearn.metrics
-import sklearn.exceptions
-from sklearn.metrics import confusion_matrix
-from sklearn.utils.multiclass import unique_labels
-import time
-import numpy as np
-import matplotlib.pyplot as plt
-
-import warnings
 
 
 def main():
     parser = argparse.ArgumentParser(description='Evaluate one or several text classifiers')
 
     # All available classifier types
-    classifier_types = SklearnGridSearch.supported_classifiers
+    classifier_types = list(SklearnGridSearch.grid.keys())
 
     parser.add_argument('--training',
                         default= r"C:\ProjectData\Uni\ltrs\classifier\classifier_data_train.json",
@@ -63,15 +51,9 @@ def main():
 
     print("INFO: Evaluating classifier(s) hyperparameters {0}".format(classifiers))
 
-
     # Iterate over the classifiers
     for classifier_type in classifiers:
-        parameter_grid = {
-                        "criterion" : ["gini", "entropy"],
-                        "max_depth" : [5, 10, 20, 40, 100, 200],
-                        "min_samples_leaf" : [1, 2, 4, 8]
-                        }
-
+        parameter_grid = SklearnGridSearch.grid[classifier_type]
         grid_search = SklearnGridSearch(classifier_type, parameter_grid)
         print("INFO: grid evaluating {0}".format(classifier_type))
         res = grid_search.grid_search(args.training, args.text_label, args.label)
@@ -81,6 +63,7 @@ def main():
             outfile.write("Classifier: {0}\n".format(classifier_type))
             for key in res.keys():
                 outfile.write("Parameter {}: {}\n".format(key, res[key]))
+
 
 if __name__ == "__main__":
     main()
