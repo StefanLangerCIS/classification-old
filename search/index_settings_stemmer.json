@@ -1,0 +1,49 @@
+{
+    "settings": {
+        "index": {
+            "number_of_replicas": "0",
+            "number_of_shards": "1"
+        },
+        "analysis": {
+            "analyzer": {
+                "default": {
+                    "type": "custom",
+                    "filter": [
+                        "alnumTokenFilter",
+                        "lowercase",
+                        "germanStemmer"
+                    ],
+                    "tokenizer": "standard"
+                }
+            },
+            "filter": {
+                "alnumTokenFilter": {
+                    "type": "word_delimiter",
+                    "split_on_case_change": true,
+                    "split_on_numerics": true,
+                    "preserve_original": true,
+                    "generate_number_parts": true,
+                    "generate_word_parts": true
+                },
+                "germanStemmer": {
+                    "type": "stemmer",
+                    "language": "german"
+                }
+            }
+        }
+    },
+    "mappings": {
+        "properties": {
+            "lang": {
+                "type": "keyword"
+            },
+            "format": {
+                "type": "keyword"
+            },
+            "year": {
+                "type": "integer",
+                "ignore_malformed": true
+            }
+        }
+    }
+}
