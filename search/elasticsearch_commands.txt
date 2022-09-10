@@ -259,3 +259,27 @@ GET tokenizer_index/_analyze
     "text" : "คนไทยบริโภคข้าวเป็นอาหารห"
 }
 
+PUT ngram_index
+{
+  "settings": {
+    "analysis": {
+      "analyzer": {
+        "default": {
+          "tokenizer": "ngram_tokenizer"
+        }
+      },
+      "tokenizer": {
+        "ngram_tokenizer": {
+          "type": "ngram",
+          "min_gram": 3,
+          "max_gram": 3,
+          "token_chars": [
+            "letter",
+            "digit"
+          ]
+        }
+      }
+    }
+  }
+}
+
